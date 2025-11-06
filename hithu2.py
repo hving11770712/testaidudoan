@@ -518,4 +518,97 @@ def get_deepseek_technical():
     """Endpoint phân tích kỹ thuật với DeepSeek"""
     try:
         with app.lock:
-            if not app.sessi
+            if not app.session_details:
+                return jsonify({"error": "Chưa có dữ liệu"}), 500
+
+            prediction, reason = app.ai_system.analyze_with_ai(app.session_details, 'technical_analysis')
+            
+            return jsonify({
+                "prediction": prediction,
+                "reason": reason,
+                "method": "deepseek_technical_analysis"
+            })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/history", methods=["GET"])
+def get_history():
+    with app.lock:
+        return jsonify({
+            "history": app.history[-50:],  # Chỉ trả về 50 phiên gần nhất
+            "session_ids": app.session_ids[-50:],
+            "details": app.session_details[:50],  # Đã được insert ngược nên lấy 50 đầu
+            "total_length": len(app.history)
+        })
+
+@app.route("/api/ai_stats", methods=["GET"])
+def get_ai_stats():
+    """Thống kê hiệu suất AI"""
+    return jsonify({
+        "ai_performance": app.ai_system.get_performance_stats(),
+        "training_data_size": len(app.ai_system.ai_training_data),
+        "model": app.ai_system.model
+    })
+
+@app.route("/api/pattern_predict", methods=["GET"])
+def get_pattern_prediction():
+    """Endpoint cho pattern prediction thuần túy"""
+    try:
+        with app.lock:
+            if not app.session_details:
+                return jsonify({"error": "Chưa có dữ liệu"}), 500
+
+            prediction, reason = pattern_predict(app.session_details)
+            
+            return jsonify({
+                "prediction": prediction,
+                "reason": reason,
+                "method": "pattern_matching"
+            })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/health", methods=["GET"])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "data_points": len(app.session_details),
+        "system": "DeepSeek Tài Xỉu Prediction System",
+        "model": "DeepSeek V3.1 Free"
+    })
+
+@app.route("/", methods=["GET"])
+def home():
+    """Home page"""
+    return jsonify({
+        "message": "DeepSeek Tài Xỉu AI Prediction System",
+        "version": "2.0",
+        "model": "DeepSeek V3.1 Free",
+        "endpoints": {
+            "/api/hitclub": "Dự đoán chính (Hybrid)",
+            "/api/deepseek_predict": "Dự đoán DeepSeek thuần túy",
+            "/api/deepseek_technical": "Phân tích kỹ thuật",
+            "/api/pattern_predict": "Dự đoán pattern",
+            "/api/ai_stats": "Thống kê AI",
+            "/api/health": "Health check"
+        }
+    })
+
+if __name__ == "__main__":
+    # Khởi chạy thread poll API
+    threading.Thread(target=poll_api, daemon=True).start()
+    
+    port = int(os.getenv("PORT", 9099))
+    logging.info(f"🚀 Khởi chạy DeepSeek Tài Xỉu Prediction System trên port {port}")
+    logging.info(f"🤖 Sử dụng AI model: {app.ai_system.model}")
+    logging.info("📊 Endpoints available:")
+    logging.info("  - GET /api/hitclub           : Dự đoán chính (Hybrid)")
+    logging.info("  - GET /api/deepseek_predict  : Dự đoán DeepSeek thuần túy") 
+    logging.info("  - GET /api/deepseek_technical: Phân tích kỹ thuật")
+    logging.info("  - GET /api/pattern_predict   : Dự đoán pattern")
+    logging.info("  - GET /api/ai_stats          : Thống kê AI")
+    logging.info("  - GET /api/health            : Health check")
+    
+    app.run(host="0.0.0.0", port=port, debug=False)  # Tắt debug cho production

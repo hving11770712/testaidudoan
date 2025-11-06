@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 API_URL = "https://hithu-ddo6.onrender.com/api/hit"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "your-openrouter-api-key-here")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
 POLL_INTERVAL = 5
 MAX_HISTORY_LEN = 500
 
